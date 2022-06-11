@@ -1,7 +1,6 @@
-import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-Map<String, String> remoteButtons = {
+const Map<String, String> remoteButtons = {
   'Power': 'AAAAAQAAAAEAAAAVAw==',
   'Input': 'AAAAAQAAAAEAAAAlAw==',
   'SyncMenu': 'AAAAAgAAABoAAABYAw==',
@@ -50,76 +49,8 @@ Map<String, String> remoteButtons = {
   'Next': 'AAAAAgAAAJcAAAA9Aw=='
 };
 
-Future<http.Response> powerOnOff(bool isOn) async {
-  const uri = 'http://192.168.0.27/sony/system';
-  String json =
-      '{"id": 20, "method": "setPowerStatus", "version": "1.0", "params": [{"status":${isOn.toString()}}]}';
-
-  final headers = {
-    'Content-Type': 'application/json',
-    'X-Auth-PSK': 'badkitty'
-  };
-
-  return await http.post(
-    Uri.parse(uri),
-    body: json,
-    headers: headers,
-  );
-}
-
-Future<http.Response> volumeUpDown(bool turnUp) async {
-  const uri = 'http://192.168.0.27/sony/audio';
-  String json =
-      '{"id": 20, "method": "setAudioVolume", "version": "1.0", "params": [{"target":"speaker","volume":"${turnUp ? '+1' : '-1'}"}]}';
-
-  final headers = {
-    'Content-Type': 'application/json',
-    'X-Auth-PSK': 'badkitty'
-  };
-
-  return await http.post(
-    Uri.parse(uri),
-    body: json,
-    headers: headers,
-  );
-}
-
-Future<http.Response> getMethodTypes() async {
-  const uri = 'http://192.168.0.27/sony/appControl';
-  String json =
-      '{"id": 20, "method": "getMethodTypes", "version": "1.0", "params": [""]}';
-
-  final headers = {
-    'Content-Type': 'application/json',
-    'X-Auth-PSK': 'badkitty'
-  };
-
-  return await http.post(
-    Uri.parse(uri),
-    body: json,
-    headers: headers,
-  );
-}
-
-Future<http.Response> getRemoteControllerInfo() async {
-  const uri = 'http://192.168.0.27/sony/system';
-  String json =
-      '{"id": 20, "method": "getRemoteControllerInfo", "version": "1.0", "params": [""]}';
-
-  final headers = {
-    'Content-Type': 'application/json',
-    'X-Auth-PSK': 'badkitty'
-  };
-
-  return await http.post(
-    Uri.parse(uri),
-    body: json,
-    headers: headers,
-  );
-}
-
-Future<http.Response> sendRemoteCode(String code) async {
-  const uri = 'http://192.168.0.27/sony/IRCC';
+Future<http.Response> sendRemoteCode(String code, String ip, String psk) async {
+  final uri = 'http://$ip/sony/IRCC';
   String envelope = '''
     <s:Envelope
     xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"
@@ -133,12 +64,12 @@ Future<http.Response> sendRemoteCode(String code) async {
     ''';
 
   final headers = {
-    'HOST': '192.168.0.27',
+    'HOST': ip,
     'Accept': '*/*',
     'Content-Type': 'text/xml; charset=UTF-8',
     'SOAPACTION': '"urn:schemas-sony-com:service:IRCC:1#X_SendIRCC"',
     'Connection': 'Keep-Alive',
-    'X-Auth-PSK': 'badkitty'
+    'X-Auth-PSK': psk
   };
 
   return await http.post(
@@ -148,6 +79,48 @@ Future<http.Response> sendRemoteCode(String code) async {
   );
 }
 
-Future<http.Response> remoteHome() async {
-  return await sendRemoteCode('AAAAAQAAAAEAAABgAw==');
+Future<http.Response> pressButton(String key, String ip, String psk) async {
+  return await sendRemoteCode(remoteButtons[key]!, ip, psk);
+}
+
+Future<http.Response> volumeUpDown(bool turnUp, String ip, String psk) async {
+  final uri = 'http://$ip/sony/audio';
+  String json =
+      '{"id": 20, "method": "setAudioVolume", "version": "1.0", "params": [{"target":"speaker","volume":"${turnUp ? '+1' : '-1'}"}]}';
+
+  final headers = {'Content-Type': 'application/json', 'X-Auth-PSK': psk};
+
+  return await http.post(
+    Uri.parse(uri),
+    body: json,
+    headers: headers,
+  );
+}
+
+Future<http.Response> getMethodTypes(String ip, String psk) async {
+  final uri = 'http://$ip/sony/appControl';
+  String json =
+      '{"id": 20, "method": "getMethodTypes", "version": "1.0", "params": [""]}';
+
+  final headers = {'Content-Type': 'application/json', 'X-Auth-PSK': psk};
+
+  return await http.post(
+    Uri.parse(uri),
+    body: json,
+    headers: headers,
+  );
+}
+
+Future<http.Response> getRemoteControllerInfo(String ip, String psk) async {
+  final uri = 'http://$ip/sony/system';
+  String json =
+      '{"id": 20, "method": "getRemoteControllerInfo", "version": "1.0", "params": [""]}';
+
+  final headers = {'Content-Type': 'application/json', 'X-Auth-PSK': psk};
+
+  return await http.post(
+    Uri.parse(uri),
+    body: json,
+    headers: headers,
+  );
 }
