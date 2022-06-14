@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 
 const Map<String, String> remoteButtons = {
@@ -111,7 +113,7 @@ Future<http.Response> getMethodTypes(String ip, String psk) async {
   );
 }
 
-Future<http.Response> getRemoteControllerInfo(String ip, String psk) async {
+Future<http.Response> getRemoteControlInfo(String ip, String psk) async {
   final uri = 'http://$ip/sony/system';
   String json =
       '{"id": 20, "method": "getRemoteControllerInfo", "version": "1.0", "params": [""]}';
@@ -123,4 +125,21 @@ Future<http.Response> getRemoteControllerInfo(String ip, String psk) async {
     body: json,
     headers: headers,
   );
+}
+
+Future<Map<String, String>> getRemoteControlButtons(
+    String ip, String psk) async {
+  final remoteControlInfo = await getRemoteControlInfo(ip, psk);
+
+  final result = jsonDecode(remoteControlInfo.body);
+
+  final list = result['result'][1];
+
+  Map<String, String> map = {};
+
+  for (Map<String, dynamic> m in list) {
+    map[m['name']] = m['value'];
+  }
+
+  return map;
 }

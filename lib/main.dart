@@ -33,11 +33,10 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  String _jsonString = '{ "default": 1 }';
   String _soapString = 'default';
   String? _ip;
   String? _psk;
-  Map<String, dynamic>? _jsonMap;
+  Map<String, dynamic> _jsonMap = remoteButtons;
 
   TextEditingController ipTextFieldController = TextEditingController()
     ..text = '';
@@ -52,15 +51,21 @@ class _MyHomePageState extends State<MyHomePage> {
         _psk = value['psk']!;
         ipTextFieldController.text = value['ip']!;
         pskTextFieldController.text = value['psk']!;
+        getRemoteControlButtons(_ip!, _psk!).then((value) {
+          if (value.isNotEmpty) {
+            setState(() {
+              _jsonMap = value;
+            });
+          }
+        });
       },
     );
-    _setJsonString(_jsonString);
+
     super.initState();
   }
 
-  void _setJsonString(String jsonString) {
+  void _setJsonMap(String jsonString) {
     setState(() {
-      _jsonString = jsonString;
       _jsonMap = json.decode(jsonString);
     });
   }
@@ -180,7 +185,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 flex: 1,
                 child: ListView(
                   children: [
-                    for (var k in remoteButtons.keys)
+                    for (var k in _jsonMap.keys)
                       TextButton(
                           onPressed: () async {
                             final response = await pressButton(k, _ip!, _psk!);
